@@ -5,7 +5,7 @@ BUILD_DIR := build
 INC_DIR := include
 SRC_DIR := src
 
-MCU := STM32F103C6T8
+MCU_VARIANT := STM32F103x6
 CPU := cortex-m3
 F_CPU := 72000000L
 
@@ -26,11 +26,11 @@ GDB := $(CROSS_COMPILE)-gdb
 
 ###############################################################################
 
-MCU_VARIANT := $(shell echo $(MCU) | sed 's|\(.\{9\}\).\(.\).*|\1x\2|')
 MCU_VARIANT_LC := $(shell echo $(MCU_VARIANT) | tr "[:upper:]" "[:lower:]")
 MCU_VARIANT_UC := $(subst x,X,$(MCU_VARIANT))
 MCU_FAMILY_LC := $(shell v=$(MCU_VARIANT_LC); echo $${v%????}xx)
 MCU_FAMILY_MC := $(shell v=$(MCU_VARIANT_UC); echo $${v%????}xx)
+OPENOCD_TARGET := $(shell v=$(MCU_VARIANT_LC); echo "target/$${v%????}x.cfg")
 
 HAL_DIR := $(CUBE_DIR)/Drivers/$(MCU_FAMILY_MC)_HAL_Driver
 CMSIS_DIR := $(CUBE_DIR)/Drivers/CMSIS
@@ -114,7 +114,7 @@ $(BUILD_DIR)/$(TARGET).hex: $(BUILD_DIR)/$(TARGET).elf
 	$Q$(OBJCOPY) -O ihex -R .eeprom $< $@
 
 flash: $(BUILD_DIR)/$(TARGET).elf
-	openocd -f interface/stlink-v2.cfg -f target/stm32f1x.cfg \
+	openocd -f interface/stlink-v2.cfg -f $(OPENOCD_TARGET) \
 		-c "program $< verify reset exit"
 
 clean:
